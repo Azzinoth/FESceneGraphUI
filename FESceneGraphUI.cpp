@@ -172,15 +172,9 @@ bool FESceneGraphUI::AreNodeChildrenVisible(FENaiveSceneGraphNode* Node)
 	return true;
 }
 
-std::string FESceneGraphUI::GetNodeInternalID(FENaiveSceneGraphNode* Node)
-{
-	FEEntity* CurrentEntity = Node->GetEntity();
-	return CurrentEntity != nullptr ? CurrentEntity->GetObjectID() : RenderingRoot != nullptr ? RenderingRoot->GetObjectID() : "";
-}
-
 bool FESceneGraphUI::IsNodeExpanded(FENaiveSceneGraphNode* Node)
 {
-	std::string NodeID = GetNodeInternalID(Node);
+	std::string NodeID = Node->GetObjectID();
 	bool bResult = false;
 	if (NodeState.find(NodeID) == NodeState.end())
 	{
@@ -196,24 +190,24 @@ bool FESceneGraphUI::IsNodeExpanded(FENaiveSceneGraphNode* Node)
 
 void FESceneGraphUI::SetNodeExpanded(FENaiveSceneGraphNode* Node, bool bExpanded)
 {
-	NodeState[GetNodeInternalID(Node)].bExpanded = bExpanded;
+	NodeState[Node->GetObjectID()].bExpanded = bExpanded;
 }
 
 bool FESceneGraphUI::IsNodeSelected(FENaiveSceneGraphNode* Node)
 {
 	bool bResult = false;
-	std::string NodeID = GetNodeInternalID(Node);
+	std::string NodeID = Node->GetObjectID();
 	if (NodeSelectionPredicate != nullptr)
 	{
 		bool bResult = NodeSelectionPredicate(Node);
-		NodeState[NodeID].bSelected = bResult;
+		SetNodeSelectedInternal(Node, bResult);
 
 		return bResult;
 	}
 	
 	if (NodeState.find(NodeID) == NodeState.end())
 	{
-		NodeState[NodeID].bSelected = false;
+		SetNodeSelectedInternal(Node, false);
 	}
 	else
 	{
@@ -223,19 +217,40 @@ bool FESceneGraphUI::IsNodeSelected(FENaiveSceneGraphNode* Node)
 	return bResult;
 }
 
+void FESceneGraphUI::SetNodeSelectedInternal(FENaiveSceneGraphNode* Node, bool bSelected)
+{
+	if (Node == nullptr)
+		return;
+
+	bool bOldSelectionState = NodeState[Node->GetObjectID()].bSelected;
+	NodeState[Node->GetObjectID()].bSelected = bSelected;
+
+	// No need to call callbacks if the selection state has not actually changed.
+	if (bOldSelectionState == bSelected)
+		return;
+	
+	for (const auto& Callback : OnNodeSelectionChangedCallbacks)
+		Callback(Node, bOldSelectionState);
+}
+
 void FESceneGraphUI::SetNodeSelected(FENaiveSceneGraphNode* Node, bool bSelected)
 {
-	if (bAllowMultipleNodeSelection)
-	{
-		NodeState[GetNodeInternalID(Node)].bSelected = bSelected;
-	}
-	else if (!bAllowMultipleNodeSelection && bSelected)
+	if (!bAllowMultipleNodeSelection && bSelected)
 	{
 		for (auto& NodeStatePair : NodeState)
-			NodeStatePair.second.bSelected = false;
+		{
+			if (NodeStatePair.first == Node->GetObjectID())
+				continue;
+
+			FENaiveSceneGraphNode* CurrentNode = GetScene()->SceneGraph.GetNodeByID(NodeStatePair.first);
+			// Node might be null if it has been deleted but its state has not been cleaned up yet.
+			// FE_FIX_ME: Clean up state of deleted nodes to avoid this situation.
+			if (CurrentNode != nullptr)
+				SetNodeSelectedInternal(CurrentNode, false);
+		}
 	}
 
-	NodeState[GetNodeInternalID(Node)].bSelected = bSelected;
+	SetNodeSelectedInternal(Node, bSelected);
 }
 
 std::vector<std::string> FESceneGraphUI::GetSelectedNodeIDs() const
@@ -287,7 +302,7 @@ void FESceneGraphUI::DrawTreeConnectorLines(FENaiveSceneGraphNode* Node, float P
 		FEScene* CurrentScene = GetScene();
 		for (size_t i = 0; i < SelectedNodeIDs.size(); i++)
 		{
-			if (IsNodePartOfBranch(Node, RenderingRoot, CurrentScene->SceneGraph.GetNodeByEntityID(SelectedNodeIDs[i])))
+			if (IsNodePartOfBranch(Node, RenderingRoot, CurrentScene->SceneGraph.GetNodeByID(SelectedNodeIDs[i])))
 			{
 				ConnectorLineColorToUse = SelectedNodeConnectorLineColor;
 				ConnectorLineThicknessToUse = SelectedConnectorLineThickness;
@@ -362,7 +377,7 @@ void FESceneGraphUI::DrawAppropriateTreeArrow(FENaiveSceneGraphNode* Node)
 		}
 
 		// Occupy the space in ImGui layout.
-		ImGui::InvisibleButton(("##Arrow" + GetNodeInternalID(Node)).c_str(), ImVec2(ArrowRegionWidth, NodeHeight));
+		ImGui::InvisibleButton(("##Arrow" + Node->GetObjectID()).c_str(), ImVec2(ArrowRegionWidth, NodeHeight));
 		if (ImGui::IsItemClicked())
 			SetNodeExpanded(Node, !bNodeExpanded);
 	}
@@ -458,11 +473,28 @@ void FESceneGraphUI::ClearOnNodeDoubleClickedCallbacks()
 	OnNodeDoubleClickedCallbacks.clear();
 }
 
+void FESceneGraphUI::AddOnNodeSelectionChangedCallback(std::function<void(FENaiveSceneGraphNode*, bool)> Callback)
+{
+	for (size_t i = 0; i < OnNodeSelectionChangedCallbacks.size(); i++)
+	{
+		if (OnNodeSelectionChangedCallbacks[i].target_type() == Callback.target_type())
+			return;
+	}
+
+	OnNodeSelectionChangedCallbacks.push_back(Callback);
+}
+
+void FESceneGraphUI::ClearOnNodeSelectionChangedCallbacks()
+{
+	OnNodeSelectionChangedCallbacks.clear();
+}
+
 void FESceneGraphUI::ClearAllInputCallbacks()
 {
 	ClearOnNodeHoveredCallbacks();
 	ClearOnNodeClickedCallbacks();
 	ClearOnNodeDoubleClickedCallbacks();
+	ClearOnNodeSelectionChangedCallbacks();
 }
 
 void FESceneGraphUI::SetContextMenuRenderingFunction(std::function<void(FENaiveSceneGraphNode*)> Function)
@@ -629,11 +661,21 @@ void FESceneGraphUI::RenderNodeWidgets(FENaiveSceneGraphNode* Node)
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Widget.HoveredColor);
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, Widget.ActiveColor);
 
-			std::string ButtonID = "##" + Widget.ID + "_" + GetNodeInternalID(Node);
+			std::string ButtonID = "##" + Widget.ID + "_" + Node->GetObjectID();
 			if (ImGui::ImageButton(ButtonID.c_str(), IconToUse->GetTextureID(), IconsSize * WidgetIconVisualRenderingFactor))
 			{
+				std::string NodeID = Node->GetObjectID();
 				if (Widget.OnClickCallback != nullptr)
 					Widget.OnClickCallback(Node);
+
+				// After these callbacks, the node might not be valid anymore (e.g. it could be removed in the callback).
+				FENaiveSceneGraphNode* NodeAfterCallbacks = GetScene()->SceneGraph.GetNodeByID(NodeID);
+				if (NodeAfterCallbacks == nullptr)
+				{
+					ImGui::PopStyleVar();
+					ImGui::PopStyleColor(3);
+					break;
+				}
 			}
 
 			ImGui::PopStyleVar();
@@ -691,7 +733,7 @@ void FESceneGraphUI::RenderNode(FENaiveSceneGraphNode* Node)
 	float NodeBodyWidth = ImGui::GetContentRegionAvail().x - SpaceNeededForWidgetAtEnd - IconSpacing;
 
 	std::string DisplayedName = GetNodeDisplayName(Node);
-	std::string DisplayedText = APPLICATION.TruncateText(DisplayedName, NodeBodyWidth) + "##" + GetNodeInternalID(Node);
+	std::string DisplayedText = APPLICATION.TruncateText(DisplayedName, NodeBodyWidth) + "##" + Node->GetObjectID();
 
 	if (bAlternatingNodeBackground)
 	{
@@ -747,7 +789,13 @@ void FESceneGraphUI::RenderNode(FENaiveSceneGraphNode* Node)
 		AfterNodeRenderCallbacks[i](Node);
 
 	CheckInputs(Node);
+	std::string NodeID = Node->GetObjectID();
 	RenderNodeWidgets(Node);
+
+	// After RenderNodeWidgets, the node might not be valid anymore (e.g. it could be removed in widget callback).
+	FENaiveSceneGraphNode* NodeAfterCallbacks = GetScene()->SceneGraph.GetNodeByID(NodeID);
+	if (NodeAfterCallbacks == nullptr)
+		return;
 
 	if (IsNodeExpanded(Node))
 	{

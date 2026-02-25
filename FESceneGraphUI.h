@@ -1,5 +1,5 @@
 #pragma once
-#include "ProjectWasModifiedPopUp.h"
+#include "FEngine.h"
 
 struct FESceneGraphNodeStateData
 {
@@ -74,8 +74,10 @@ class FESceneGraphUI
 	std::unordered_map<std::string, FESceneGraphNodeStateData> NodeState;
 	bool bAllowMultipleNodeSelection = false;
 	std::function<bool(FENaiveSceneGraphNode*)> NodeSelectionPredicate = nullptr;
+	std::vector<std::function<void(FENaiveSceneGraphNode*, bool)>> OnNodeSelectionChangedCallbacks;
 	bool IsNodeSelected(FENaiveSceneGraphNode* Node);
 	void SetNodeSelected(FENaiveSceneGraphNode* Node, bool bSelected);
+	void SetNodeSelectedInternal(FENaiveSceneGraphNode* Node, bool bSelected);
 
 
 	// Predicates and providers.
@@ -175,7 +177,6 @@ public:
 	std::string GetSceneID() const;
 	FEScene* GetScene() const;
 	FENaiveSceneGraphNode* GetCurrentRenderingRoot() const;
-	std::string GetNodeInternalID(FENaiveSceneGraphNode* Node);
 
 	void Render(FENaiveSceneGraphNode* RenderingRoot, bool bRenderRootItself = true);
 	float GetFontSize() const;
@@ -217,6 +218,9 @@ public:
 
 	void AddOnNodeDoubleClickedCallback(std::function<void(FENaiveSceneGraphNode*, ImGuiMouseButton_)> Callback);
 	void ClearOnNodeDoubleClickedCallbacks();
+
+	void AddOnNodeSelectionChangedCallback(std::function<void(FENaiveSceneGraphNode*, bool)> Callback);
+	void ClearOnNodeSelectionChangedCallbacks();
 
 	void ClearAllInputCallbacks();
 	void ClearAllCallbacks();
