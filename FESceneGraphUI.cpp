@@ -193,6 +193,29 @@ void FESceneGraphUI::SetNodeExpanded(FENaiveSceneGraphNode* Node, bool bExpanded
 	NodeState[Node->GetObjectID()].bExpanded = bExpanded;
 }
 
+bool FESceneGraphUI::IsNodeExpandedTo(FENaiveSceneGraphNode* Node)
+{
+	FENaiveSceneGraphNode* Current = Node->GetParent();
+	while (Current != nullptr)
+	{
+		if (!NodeState[Current->GetObjectID()].bExpanded)
+			return false;
+		Current = Current->GetParent();
+	}
+
+	return true;
+}
+
+void FESceneGraphUI::ExpandToNode(FENaiveSceneGraphNode* Node)
+{
+	FENaiveSceneGraphNode* Current = Node->GetParent();
+	while (Current != nullptr)
+	{
+		NodeState[Current->GetObjectID()].bExpanded = true;
+		Current = Current->GetParent();
+	}
+}
+
 bool FESceneGraphUI::IsNodeSelected(FENaiveSceneGraphNode* Node)
 {
 	bool bResult = false;
@@ -221,6 +244,9 @@ void FESceneGraphUI::SetNodeSelectedInternal(FENaiveSceneGraphNode* Node, bool b
 {
 	if (Node == nullptr)
 		return;
+
+	if (bSelected)
+		ExpandToNode(Node);
 
 	bool bOldSelectionState = NodeState[Node->GetObjectID()].bSelected;
 	NodeState[Node->GetObjectID()].bSelected = bSelected;

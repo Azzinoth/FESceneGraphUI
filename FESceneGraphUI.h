@@ -75,8 +75,6 @@ class FESceneGraphUI
 	bool bAllowMultipleNodeSelection = false;
 	std::function<bool(FENaiveSceneGraphNode*)> NodeSelectionPredicate = nullptr;
 	std::vector<std::function<void(FENaiveSceneGraphNode*, bool)>> OnNodeSelectionChangedCallbacks;
-	bool IsNodeSelected(FENaiveSceneGraphNode* Node);
-	void SetNodeSelected(FENaiveSceneGraphNode* Node, bool bSelected);
 	void SetNodeSelectedInternal(FENaiveSceneGraphNode* Node, bool bSelected);
 
 
@@ -193,8 +191,12 @@ public:
 	void AddAfterNodeRenderCallback(std::function<void(FENaiveSceneGraphNode*)> Callback);
 
 	std::vector<std::string> GetSelectedNodeIDs() const;
+	bool IsNodeSelected(FENaiveSceneGraphNode* Node);
+	void SetNodeSelected(FENaiveSceneGraphNode* Node, bool bSelected);
 	bool IsNodeExpanded(FENaiveSceneGraphNode* Node);
 	void SetNodeExpanded(FENaiveSceneGraphNode* Node, bool bExpanded);
+	bool IsNodeExpandedTo(FENaiveSceneGraphNode* Node);
+	void ExpandToNode(FENaiveSceneGraphNode* Node);
 	void ExpandAllNodes();
 	void CollapseAllNodes();
 	
