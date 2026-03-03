@@ -245,15 +245,14 @@ void FESceneGraphUI::SetNodeSelectedInternal(FENaiveSceneGraphNode* Node, bool b
 	if (Node == nullptr)
 		return;
 
+	if (NodeState[Node->GetObjectID()].bSelected == bSelected)
+		return;
+
 	if (bSelected)
 		ExpandToNode(Node);
 
 	bool bOldSelectionState = NodeState[Node->GetObjectID()].bSelected;
 	NodeState[Node->GetObjectID()].bSelected = bSelected;
-
-	// No need to call callbacks if the selection state has not actually changed.
-	if (bOldSelectionState == bSelected)
-		return;
 	
 	for (const auto& Callback : OnNodeSelectionChangedCallbacks)
 		Callback(Node, bOldSelectionState);
