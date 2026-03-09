@@ -17,6 +17,7 @@
 *.vcxproj.user
 *.txt
 cmake_install.cmake
+FE_SCENE_GRAPH_UI_Version.h
 
 #Folders
 Debug/

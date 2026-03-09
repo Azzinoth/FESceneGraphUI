@@ -173,6 +173,7 @@ public:
 	~FESceneGraphUI();
 
 	std::string GetSceneID() const;
+	std::string GetFullVersion();
 	FEScene* GetScene() const;
 	FENaiveSceneGraphNode* GetCurrentRenderingRoot() const;
 

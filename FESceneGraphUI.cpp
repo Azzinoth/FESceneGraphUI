@@ -9,6 +9,15 @@ FESceneGraphUI::FESceneGraphUI()
 
 FESceneGraphUI::~FESceneGraphUI() {}
 
+#include "VersionInfo/FE_SCENE_GRAPH_UI_Version.h"
+#include "VersionInfo/FEVersionInfo.h"
+FE_DEFINE_VERSION_INFO(FE_SCENE_GRAPH_UI_)
+
+std::string FESceneGraphUI::GetFullVersion()
+{
+	return "Scene Graph UI " + GetFE_SCENE_GRAPH_UI_VersionInfo().GetFullVersionString();
+}
+
 std::string FESceneGraphUI::GetSceneID() const
 {
 	return CurrentSceneID;
