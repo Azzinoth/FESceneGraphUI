@@ -1043,8 +1043,20 @@ void FESceneGraphUI::Render(FENaiveSceneGraphNode* RenderingRoot, bool bRenderRo
 		else
 		{
 			std::vector<FENaiveSceneGraphNode*> Children = RenderingRoot->GetChildren();
+			std::vector<std::string> ChildrenIDs;
 			for (size_t i = 0; i < Children.size(); i++)
-				RenderNode(Children[i]);
+				ChildrenIDs.push_back(Children[i]->GetObjectID());
+
+			// We snapshot children as IDs rather than pointers because rendering
+			// each node can trigger callbacks that modify the scene graph,
+			// potentially invalidating pointers. We re-resolve each ID before use
+			// and skip any nodes that were removed during iteration.
+			for (size_t i = 0; i < ChildrenIDs.size(); i++)
+			{
+				FENaiveSceneGraphNode* ChildNode = CurrentScene->SceneGraph.GetNodeByID(ChildrenIDs[i]);
+				if (ChildNode != nullptr)
+					RenderNode(ChildNode);
+			}
 		}
 
 		// Node widgets render on the same line as the Selectable and shift the cursor Y position due to vertical centering adjustments.
