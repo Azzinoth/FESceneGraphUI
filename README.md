@@ -1,10 +1,19 @@
 # FESceneGraphUI
 
-A reusable scene graph UI component for the [Focal Engine](https://github.com/Azzinoth/FocalEngine). It provides a hierarchical tree view for visualizing and interacting with scene graph nodes using ImGui.
+A reusable scene graph UI component built on Dear ImGui. It provides a hierarchical tree view (`SceneGraphUI::TreeView`) for visualizing and interacting with scene graph nodes. The widget is decoupled from any specific engine through a `SceneGraphUI::BackendInterface`, with a ready-made backend for the [Focal Engine](https://github.com/Azzinoth/FocalEngine).
+
+## Architecture
+
+- `SceneGraphUI::BackendInterface` - abstract interface your data source implements (root, children, parent, IDs, names, tags, move/rename, liveness).
+- `SceneGraphUI::NodeHandle` - opaque handle the widget passes around; wraps a backend pointer + ID.
+- `SceneGraphUI::TreeView` - the ImGui widget. Construct with a `BackendInterface*` and call `Render()` per frame.
+- `FESceneGraphBackend` (optional) - default backend for Focal Engine.
+
+To use FESceneGraphUI with a non Focal-Engine project, implement `BackendInterface` against your own scene representation; no Focal Engine dependency is needed.
 
 ## Integration
 
-FESceneGraphUI is designed to be used as a Git submodule. It depends on [Focal Engine](https://github.com/Azzinoth/FocalEngine) but does not include it, parent project is responsible for providing the FocalEngine target.
+FESceneGraphUI is designed to be used as a Git submodule. Dear ImGui is required; Focal Engine is only required if you opt into the bundled backend.
 
 ### Setup
 
@@ -13,13 +22,26 @@ Add as a submodule:
 git submodule add https://github.com/Azzinoth/FESceneGraphUI SubSystems/FESceneGraphUI
 ```
 
-In your CMakeLists.txt, add FESceneGraphUI **after** FocalEngine:
+Minimal CMake (custom backend, no Focal Engine):
 ```cmake
+set(DEAR_IMGUI_INCLUDE_DIR "path/to/imgui" CACHE PATH "" FORCE)
+add_subdirectory(path/to/FESceneGraphUI)
+
+target_link_libraries(YourProject PRIVATE FESceneGraphUI)
+```
+
+With the Focal Engine backend (add after FocalEngine):
+```cmake
+set(DEAR_IMGUI_INCLUDE_DIR "path/to/imgui" CACHE PATH "" FORCE)
+set(FE_SCENE_GRAPH_UI_WITH_FOCAL_BACKEND ON CACHE BOOL "" FORCE)
+
 add_subdirectory(path/to/FocalEngine)
 add_subdirectory(path/to/FESceneGraphUI)
 
-target_link_libraries(YourProject PRIVATE FocalEngine FESceneGraphUI)
+target_link_libraries(YourProject PRIVATE FocalEngine FESceneGraphUI FESceneGraphUI_FocalBackend)
+
 ```
+
 ## Focal Engine Ecosystem
 
 The Focal Engine project consists of four modular components that work together to provide a complete development environment:
