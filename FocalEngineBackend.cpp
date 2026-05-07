@@ -72,7 +72,7 @@ std::string FESceneGraphBackend::GetTag(SceneGraphUI::NodeHandle Node)
     if (Entity == nullptr)
         return "";
 
-    return Entity->GetComponent<FETagComponent>().GetTag();
+    return Entity->GetTag();
 }
 
 bool FESceneGraphBackend::MoveNode(SceneGraphUI::NodeHandle Node, SceneGraphUI::NodeHandle NewParent)
