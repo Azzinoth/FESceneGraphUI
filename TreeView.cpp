@@ -1132,7 +1132,14 @@ void TreeView::Render(NodeHandle RenderingRoot, bool bRenderRootItself)
 		// After all nodes are rendered, we set the cursor to correct position to ensure the parent container (e.g. ListBox) accounts for the full content height.
 		// If not accounted for, ImGui will assert with request to use Dummy().
 		if (YCursorPositionBeforeRenderingWidgets > YCursorPositionAfterRenderingWidgets)
-			ImGui::SetCursorPosY(YCursorPositionAfterRenderingWidgets);
+		{
+			// Another safety check to avoid setting cursor to incorrect position in case of some unexpected issue with Y positions calculation.
+			if (ImGui::GetCursorPosY() > YCursorPositionAfterRenderingWidgets)
+			{
+				float CurrentPositionY = ImGui::GetCursorPosY();
+				ImGui::SetCursorPosY(YCursorPositionAfterRenderingWidgets);
+			}
+		}
 
 		if (DefaultFont != nullptr)
 			ImGui::PopFont();
