@@ -62,4 +62,12 @@ This modularity makes it easier to include just the engine in applications that 
 
 [Focal Engine Editor](https://github.com/Azzinoth/FocalEngineEditor) - A comprehensive editor for the engine.
 
+![Scene graph in Focal Engine Editor](https://github.com/Azzinoth/FESceneGraphUI/blob/media/FocalEngineEditor.png)
+
 [HabiCAT 3D](https://github.com/Azzinoth/HabiCAT3D) - An open-source software that implements novel algorithms for generating multi-scale complexity metrics maps(like rugosity, fractal dimension, vector dispersion and others) for complex 3D habitat models.
+
+![Scene graph with analysis objects in HabiCAT 3D](https://github.com/Azzinoth/FESceneGraphUI/blob/media/HabiCAT3D.png)
+
+[Focal Engine Test Platform](https://github.com/Azzinoth/FocalEngineTestPlatform) - A visual, node-based GUI test automation tool for end-to-end testing of desktop applications, where test scenarios are created as visual node networks that simulate user input and verify results via image matching and/or OCR.
+
+![Scene graph with test visualnode areas in Focal Engine Test Platform](https://github.com/Azzinoth/FESceneGraphUI/blob/media/FocalEngineTestPlatform.png)
