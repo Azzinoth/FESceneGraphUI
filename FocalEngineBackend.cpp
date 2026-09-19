@@ -43,7 +43,20 @@ SceneGraphUI::NodeHandle FESceneGraphBackend::GetNodeByID(const std::string& ID)
     if (Scene == nullptr)
         return { nullptr, this };
 
-    return { Scene->SceneGraph.GetNodeByID(ID), this };
+    FENaiveSceneGraphNode* CurrentNode = Scene->SceneGraph.GetNodeByID(ID);
+    if (CurrentNode == nullptr)
+    {
+        // It might be that the node is alive, but node's scene is not in focus.
+        Scene = SCENE_MANAGER.GetSceneByNodeID(ID);
+        if (Scene == nullptr)
+            return { nullptr, this };
+
+        CurrentNode = Scene->SceneGraph.GetNodeByID(ID);
+        if (CurrentNode == nullptr)
+            return { nullptr, this };
+    }
+
+    return { CurrentNode, this };
 }
 
 std::string FESceneGraphBackend::GetNodeID(SceneGraphUI::NodeHandle Node)
@@ -91,7 +104,16 @@ bool FESceneGraphBackend::IsAlive(SceneGraphUI::NodeHandle Node)
 
     FENaiveSceneGraphNode* CurrentNode = Scene->SceneGraph.GetNodeByID(Node.GetID());
     if (CurrentNode == nullptr)
-        return false;
+    {
+		// It might be that the node is alive, but node's scene is not in focus.
+        Scene = SCENE_MANAGER.GetSceneByNodeID(Node.GetID());
+		if (Scene == nullptr)
+			return false;
+
+		CurrentNode = Scene->SceneGraph.GetNodeByID(Node.GetID());
+		if (CurrentNode == nullptr)
+			return false;
+    }
 
     return true;
 }

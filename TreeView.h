@@ -81,6 +81,7 @@ namespace SceneGraphUI
 		std::function<bool(SceneGraphUI::NodeHandle)> NodeSelectionPredicate = nullptr;
 		std::vector<std::function<void(SceneGraphUI::NodeHandle, bool)>> OnNodeSelectionChangedCallbacks;
 		void SetNodeSelectedInternal(SceneGraphUI::NodeHandle Node, bool bSelected);
+		void PurgeStaleNodeStates();
 
 
 		// Predicates and providers.

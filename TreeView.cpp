@@ -256,6 +256,8 @@ void TreeView::SetNodeSelectedInternal(SceneGraphUI::NodeHandle Node, bool bSele
 
 void TreeView::SetNodeSelected(NodeHandle Node, bool bSelected)
 {
+	PurgeStaleNodeStates();
+
 	if (!bAllowMultipleNodeSelection && bSelected)
 	{
 		for (auto& NodeStatePair : NodeState)
@@ -284,6 +286,22 @@ std::vector<std::string> TreeView::GetSelectedNodeIDs() const
 	}
 
 	return SelectedNodeIDs;
+}
+
+void TreeView::PurgeStaleNodeStates()
+{
+	auto NodeStateIterator = NodeState.begin();
+	while (NodeStateIterator != NodeState.end())
+	{
+		if (!Backend->IsAlive(Backend->GetNodeByID(NodeStateIterator->first)))
+		{
+			NodeStateIterator = NodeState.erase(NodeStateIterator);
+		}
+		else
+		{
+			NodeStateIterator++;
+		}
+	}
 }
 
 bool TreeView::IsNodePartOfBranch(SceneGraphUI::NodeHandle NodeToCheck, SceneGraphUI::NodeHandle BranchRoot, SceneGraphUI::NodeHandle BranchLeaf)
