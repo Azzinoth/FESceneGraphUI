@@ -11,6 +11,10 @@ A reusable scene graph UI component built on Dear ImGui. It provides a hierarchi
 
 To use FESceneGraphUI with a non Focal-Engine project, implement `BackendInterface` against your own scene representation; no Focal Engine dependency is needed.
 
+### IDs
+
+Node and widget IDs are `SceneGraphUI::FEUUID`, an alias of `uuids::uuid`. Other Focal Engine modules declare `FEUUID` the same way, so IDs pass between them without conversion.
+
 ## Integration
 
 FESceneGraphUI is designed to be used as a Git submodule. Dear ImGui is required; Focal Engine is only required if you opt into the bundled backend.
@@ -57,6 +61,12 @@ Focal Engine Scene Graph UI (this repository) - A reusable scene graph UI compon
 [Focal Engine Editor](https://github.com/Azzinoth/FocalEngineEditor) - A comprehensive editor for the engine.
 
 This modularity makes it easier to include just the engine in applications that don't need the editor's complexity. It also simplifies the implementation of export functionality in the editor, allowing users to compile their projects into standalone executable applications with all necessary resources.
+
+## Third Party Licenses
+
+This project uses the following third-party libraries:
+
+1) **stduuid**: This library is licensed under the MIT License. The full license text can be found at [stduuid's GitHub repository](https://github.com/mariusbancila/stduuid/blob/master/LICENSE). It includes a bundled copy of [Microsoft GSL](https://github.com/microsoft/GSL), which is also licensed under the MIT License.
 
 ## Projects Using FESceneGraphUI
 

@@ -12,7 +12,7 @@ bool FESceneGraphBackend::IsReady() const
     return Graph != nullptr;
 }
 
-void FESceneGraphBackend::SetSceneID(std::string NewSceneID)
+void FESceneGraphBackend::SetSceneID(const FEUUID& NewSceneID)
 {
     SceneID = NewSceneID;
     Graph = &SCENE_MANAGER.GetSceneByID(SceneID)->SceneGraph;
@@ -37,7 +37,7 @@ SceneGraphUI::NodeHandle FESceneGraphBackend::GetParent(SceneGraphUI::NodeHandle
     return { Node.As<FENaiveSceneGraphNode>()->GetParent(), this };
 }
 
-SceneGraphUI::NodeHandle FESceneGraphBackend::GetNodeByID(const std::string& ID)
+SceneGraphUI::NodeHandle FESceneGraphBackend::GetNodeByID(const FEUUID& ID)
 {
     FEScene* Scene = SCENE_MANAGER.GetSceneByID(SceneID);
     if (Scene == nullptr)
@@ -59,9 +59,9 @@ SceneGraphUI::NodeHandle FESceneGraphBackend::GetNodeByID(const std::string& ID)
     return { CurrentNode, this };
 }
 
-std::string FESceneGraphBackend::GetNodeID(SceneGraphUI::NodeHandle Node)
+FEUUID FESceneGraphBackend::GetNodeID(SceneGraphUI::NodeHandle Node)
 {
-    return Node.As<FENaiveSceneGraphNode>()->GetObjectID();
+    return Node.As<FENaiveSceneGraphNode>()->GetID();
 }
 
 std::string FESceneGraphBackend::GetNodeName(SceneGraphUI::NodeHandle Node)

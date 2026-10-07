@@ -16,15 +16,15 @@ namespace SceneGraphUI
 	{
 		friend class TreeView;
 	private:
-		std::string ID;
+		FEUUID ID;
 
 	public:
-		NodeWidget::NodeWidget()
+		NodeWidget()
 		{
-			ID = SceneGraphUI::BackendInterface::GetUniqueHexID();
+			ID = SceneGraphUI::GenerateID();
 		}
 
-		std::string GetID() const
+		FEUUID GetID() const
 		{
 			return ID;
 		}
@@ -76,7 +76,7 @@ namespace SceneGraphUI
 
 
 		// Node state (expand/collapse/selection).
-		std::unordered_map<std::string, NodeStateData> NodeState;
+		std::unordered_map<FEUUID, NodeStateData> NodeState;
 		bool bAllowMultipleNodeSelection = false;
 		std::function<bool(SceneGraphUI::NodeHandle)> NodeSelectionPredicate = nullptr;
 		std::vector<std::function<void(SceneGraphUI::NodeHandle, bool)>> OnNodeSelectionChangedCallbacks;
@@ -123,8 +123,8 @@ namespace SceneGraphUI
 
 		// Input handling.
 		bool bWindowHovered = false;
-		std::string HoveredNodeID = "";
-		std::string HoveredNodeIDWhenContextMenuWasOpened = "";
+		FEUUID HoveredNodeID;
+		FEUUID HoveredNodeIDWhenContextMenuWasOpened;
 		bool bShouldOpenContextMenu = false;
 		std::function<void(SceneGraphUI::NodeHandle)> ContextMenuRenderer = nullptr;
 		void RenderContextMenu();
@@ -141,7 +141,7 @@ namespace SceneGraphUI
 
 
 		// Renaming functionality.
-		std::string NodeIDBeingRenamed = "";
+		FEUUID NodeIDBeingRenamed;
 		char RenameBuffer[1024];
 		bool bLastFrameRenameEditWasVisible = false;
 		std::function<void(SceneGraphUI::NodeHandle, std::string)> RenameNodeFunction = nullptr;
@@ -164,14 +164,14 @@ namespace SceneGraphUI
 		bool bDebugRenderRoot = true;
 		bool bDebugRenderRandomNodeIcons = false;
 #ifdef SCENE_GRAPH_UI_WITH_FOCAL_ENGINE
-		std::vector<std::string> DebugIconsIDs;
+		std::vector<FEUUID> DebugIconsIDs;
 		FETexture* GetDebugIconByIndex(const size_t& IconIndex);
 		FETexture* GetRandomDebugIcon();
 		void DebugCreateRandomWidgets(bool bInteractive);
 
 		std::vector<NodeWidget> DebugNodeWidgets;
 
-		std::string TestSceneID;
+		FEUUID TestSceneID;
 		FEScene* GetTestScene();
 		bool InitiateTestScene();
 		void DebugRenderUI();
@@ -198,7 +198,7 @@ namespace SceneGraphUI
 		void AddBeforeNodeRenderCallback(std::function<void(SceneGraphUI::NodeHandle)> Callback);
 		void AddAfterNodeRenderCallback(std::function<void(SceneGraphUI::NodeHandle)> Callback);
 
-		std::vector<std::string> GetSelectedNodeIDs() const;
+		std::vector<FEUUID> GetSelectedNodeIDs() const;
 		bool IsNodeSelected(SceneGraphUI::NodeHandle Node);
 		void SetNodeSelected(SceneGraphUI::NodeHandle Node, bool bSelected);
 		bool IsNodeExpanded(SceneGraphUI::NodeHandle Node);
@@ -214,10 +214,10 @@ namespace SceneGraphUI
 		void RemoveHiddenEntityTag(const std::string& TagToRemove);
 		void ClearHiddenEntityTags();
 
-		NodeWidget* GetNodeWidgetByID(const std::string& WidgetID);
+		NodeWidget* GetNodeWidgetByID(const FEUUID& WidgetID);
 		std::vector<NodeWidget> GetAllNodeWidgets() const;
 		bool AddNodeWidget(NodeWidget& Widget);
-		bool RemoveNodeWidget(const std::string& WidgetID);
+		bool RemoveNodeWidget(const FEUUID& WidgetID);
 		void ClearNodeWidgets();
 
 		void AddOnNodeHoveredCallback(std::function<void(SceneGraphUI::NodeHandle)> Callback);
@@ -246,8 +246,8 @@ namespace SceneGraphUI
 		bool IsInDebugMode();
 		void SetDebugMode(bool bNewValue);
 #ifdef SCENE_GRAPH_UI_WITH_FOCAL_ENGINE
-		std::vector<std::string> GetDebugIconsIDs() const;
-		void SetDebugIconsIDs(const std::vector<std::string>& NewDebugIconsIDs);
+		std::vector<FEUUID> GetDebugIconsIDs() const;
+		void SetDebugIconsIDs(const std::vector<FEUUID>& NewDebugIconsIDs);
 #endif
 	};
 }

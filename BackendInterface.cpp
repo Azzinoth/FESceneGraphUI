@@ -1,5 +1,64 @@
 #include "BackendInterface.h"
+#include <algorithm>
+#include <array>
+#include <mutex>
 using namespace SceneGraphUI;
+
+FEUUID SceneGraphUI::GenerateID()
+{
+	static std::mutex IDGenerationMutex;
+	static std::mt19937 RandomEngine = []() {
+		std::random_device RandomDevice;
+		std::array<unsigned int, std::mt19937::state_size> SeedData;
+		std::generate(SeedData.begin(), SeedData.end(), std::ref(RandomDevice));
+		std::seed_seq Sequence(SeedData.begin(), SeedData.end());
+		return std::mt19937(Sequence);
+	}();
+	static uuids::uuid_random_generator Generator(RandomEngine);
+
+	std::lock_guard<std::mutex> Lock(IDGenerationMutex);
+	return Generator();
+}
+
+FEUUID SceneGraphUI::ConvertLegacyHexID(const std::string& HexID)
+{
+	// Fixed namespace for converting old hex IDs, must never change.
+	// Must be the same as in FEBasicApplication, so the same legacy ID gives the same FEUUID in every module.
+	static const FEUUID LegacyIDNamespace = uuids::uuid::from_string("040bcbf8-3a7c-4815-9da7-117bfb3f9bde").value();
+	uuids::uuid_name_generator NameGenerator(LegacyIDNamespace);
+	return NameGenerator(HexID);
+}
+
+bool SceneGraphUI::IsNull(const FEUUID& ID)
+{
+	return ID.is_nil();
+}
+
+std::string SceneGraphUI::ToString(const FEUUID& ID)
+{
+	return uuids::to_string(ID);
+}
+
+FEUUID SceneGraphUI::FromString(const std::string& ID)
+{
+	auto Result = uuids::uuid::from_string(ID);
+	if (!Result.has_value())
+		return FEUUID();
+
+	return Result.value();
+}
+
+FEUUID SceneGraphUI::FromStringLegacyCompatible(const std::string& ID)
+{
+	if (ID.empty())
+		return FEUUID();
+
+	auto Result = uuids::uuid::from_string(ID);
+	if (Result.has_value())
+		return Result.value();
+
+	return ConvertLegacyHexID(ID);
+}
 
 NodeHandle::NodeHandle(void* InNode, BackendInterface* InBackend) : Node(InNode), Backend(InBackend)
 {
@@ -22,7 +81,7 @@ bool NodeHandle::WasInitialized() const
 	return Node != nullptr && Backend != nullptr;
 }
 
-std::string NodeHandle::GetID() const
+FEUUID NodeHandle::GetID() const
 {
 	return NodeID;
 }
@@ -50,64 +109,6 @@ size_t NodeHandle::GetDepth() const
 std::string NodeHandle::GetTag() const
 {
 	return Backend->GetTag(*this);
-}
-
-std::string BackendInterface::GetUniqueID()
-{
-	static std::random_device RandomDevice;
-	static std::mt19937 RandomEngine(RandomDevice());
-	static std::uniform_int_distribution<int> Distribution(0, 128);
-
-	static bool FirstInitialization = true;
-	if (FirstInitialization)
-	{
-		srand(static_cast<unsigned>(time(nullptr)));
-		FirstInitialization = false;
-	}
-
-	std::string ID;
-	ID += static_cast<char>(Distribution(RandomEngine));
-	for (size_t j = 0; j < 11; j++)
-	{
-		ID.insert(rand() % ID.size(), 1, static_cast<char>(Distribution(RandomEngine)));
-	}
-
-	return ID;
-}
-
-std::string BackendInterface::GetUniqueHexID()
-{
-	const std::string ID = GetUniqueID();
-	std::string IDinHex;
-
-	for (size_t i = 0; i < ID.size(); i++)
-	{
-		IDinHex.push_back("0123456789ABCDEF"[(ID[i] >> 4) & 15]);
-		IDinHex.push_back("0123456789ABCDEF"[ID[i] & 15]);
-	}
-
-	const std::string AdditionalRandomness = GetUniqueID();
-	std::string AdditionalString;
-	for (size_t i = 0; i < ID.size(); i++)
-	{
-		AdditionalString.push_back("0123456789ABCDEF"[(AdditionalRandomness[i] >> 4) & 15]);
-		AdditionalString.push_back("0123456789ABCDEF"[AdditionalRandomness[i] & 15]);
-	}
-	std::string FinalID;
-
-	for (size_t i = 0; i < ID.size() * 2; i++)
-	{
-		if (rand() % 2 - 1)
-		{
-			FinalID += IDinHex[i];
-		}
-		else
-		{
-			FinalID += AdditionalString[i];
-		}
-	}
-
-	return FinalID;
 }
 
 std::string BackendInterface::TruncateText(const std::string& Text, float MaxWidth, EllipsisPosition Position, const std::string& Ellipsis)

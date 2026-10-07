@@ -7,13 +7,25 @@
 #include "imgui.h"
 #include "imgui_internal.h"
 
+#include "ThirdParty/stduuid/uuid.h"
+
 namespace SceneGraphUI
 {
+    using FEUUID = uuids::uuid;
+
+    FEUUID GenerateID();
+    FEUUID ConvertLegacyHexID(const std::string& HexID);
+    bool IsNull(const FEUUID& ID);
+
+    std::string ToString(const FEUUID& ID);
+    FEUUID FromString(const std::string& ID);
+    FEUUID FromStringLegacyCompatible(const std::string& ID);
+
     class BackendInterface;
     class NodeHandle
     {
         void* Node = nullptr;
-        std::string NodeID;
+        FEUUID NodeID;
         BackendInterface* Backend = nullptr;
     public:
         NodeHandle() = default;
@@ -31,7 +43,7 @@ namespace SceneGraphUI
             return static_cast<T*>(Node);
         }
 
-        std::string GetID() const;
+        FEUUID GetID() const;
         std::string GetName() const;
         NodeHandle GetParent() const;
         std::vector<NodeHandle> GetChildren() const;
@@ -55,12 +67,6 @@ namespace SceneGraphUI
         friend struct NodeWidget;
 		friend class TreeView;
 
-        static std::string GetUniqueID();
-        // This function can produce ID's that are "unique" with very rare collisions.
-        // For most purposes it can be considered unique.
-        // ID is a 24 long string.
-        static std::string GetUniqueHexID();
-
         enum class EllipsisPosition
         {
             End,
@@ -78,8 +84,8 @@ namespace SceneGraphUI
         virtual std::vector<NodeHandle> GetChildren(NodeHandle Node) = 0;
         virtual NodeHandle GetParent(NodeHandle Node) = 0;
 
-        virtual NodeHandle GetNodeByID(const std::string& ID) = 0;
-        virtual std::string GetNodeID(NodeHandle Node) = 0;
+        virtual NodeHandle GetNodeByID(const FEUUID& ID) = 0;
+        virtual FEUUID GetNodeID(NodeHandle Node) = 0;
         virtual std::string GetNodeName(NodeHandle Node) = 0;
 
         virtual size_t GetDepth(NodeHandle Node);

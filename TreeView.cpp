@@ -169,7 +169,7 @@ bool TreeView::AreNodeChildrenVisible(NodeHandle Node)
 
 bool TreeView::IsNodeExpanded(SceneGraphUI::NodeHandle Node)
 {
-	std::string NodeID = Node.GetID();
+	FEUUID NodeID = Node.GetID();
 	bool bResult = false;
 	if (NodeState.find(NodeID) == NodeState.end())
 	{
@@ -215,7 +215,7 @@ bool TreeView::IsNodeExpandedTo(SceneGraphUI::NodeHandle Node)
 bool TreeView::IsNodeSelected(SceneGraphUI::NodeHandle Node)
 {
 	bool bResult = false;
-	std::string NodeID = Node.GetID();
+	FEUUID NodeID = Node.GetID();
 	if (NodeSelectionPredicate != nullptr)
 	{
 		bool bResult = NodeSelectionPredicate(Node);
@@ -276,9 +276,9 @@ void TreeView::SetNodeSelected(NodeHandle Node, bool bSelected)
 	SetNodeSelectedInternal(Node, bSelected);
 }
 
-std::vector<std::string> TreeView::GetSelectedNodeIDs() const
+std::vector<FEUUID> TreeView::GetSelectedNodeIDs() const
 {
-	std::vector<std::string> SelectedNodeIDs;
+	std::vector<FEUUID> SelectedNodeIDs;
 	for (const auto& NodeStatePair : NodeState)
 	{
 		if (NodeStatePair.second.bSelected)
@@ -335,7 +335,7 @@ void TreeView::DrawTreeConnectorLines(SceneGraphUI::NodeHandle Node, float Paren
 	ImColor ConnectorLineColorToUse = ImColor(this->ConnectorLineColor);
 	float ConnectorLineThicknessToUse = ConnectorLineThickness;
 	bool bNeedToHighlightNodeBranch = false;
-	std::vector<std::string> SelectedNodeIDs = GetSelectedNodeIDs();
+	std::vector<FEUUID> SelectedNodeIDs = GetSelectedNodeIDs();
 	if (bHighlightSelectedNodeConnectorLines && !SelectedNodeIDs.empty())
 	{
 		for (size_t i = 0; i < SelectedNodeIDs.size(); i++)
@@ -415,7 +415,7 @@ void TreeView::DrawAppropriateTreeArrow(SceneGraphUI::NodeHandle Node)
 		}
 
 		// Occupy the space in ImGui layout.
-		ImGui::InvisibleButton(("##Arrow" + Node.GetID()).c_str(), ImVec2(ArrowRegionWidth, NodeHeight));
+		ImGui::InvisibleButton(("##Arrow" + ToString(Node.GetID())).c_str(), ImVec2(ArrowRegionWidth, NodeHeight));
 		if (ImGui::IsItemClicked())
 			SetNodeExpanded(Node, !bNodeExpanded);
 	}
@@ -572,7 +572,7 @@ void TreeView::ClearOnNodeHoveredCallbacks()
 	OnNodeHoveredCallbacks.clear();
 }
 
-NodeWidget* TreeView::GetNodeWidgetByID(const std::string& WidgetID)
+NodeWidget* TreeView::GetNodeWidgetByID(const FEUUID& WidgetID)
 {
 	for (size_t i = 0; i < NodeWidgets.size(); i++)
 	{
@@ -600,7 +600,7 @@ bool TreeView::AddNodeWidget(NodeWidget& Widget)
 	return true;
 }
 
-bool TreeView::RemoveNodeWidget(const std::string& WidgetID)
+bool TreeView::RemoveNodeWidget(const FEUUID& WidgetID)
 {
 	for (size_t i = 0; i < NodeWidgets.size(); i++)
 	{
@@ -700,8 +700,7 @@ void TreeView::RenderNodeWidgets(SceneGraphUI::NodeHandle Node)
 			ImGui::PushStyleColor(ImGuiCol_ButtonHovered, Widget.HoveredColor);
 			ImGui::PushStyleColor(ImGuiCol_ButtonActive, Widget.ActiveColor);
 			
-			std::string NodeID = Node.GetID();
-			std::string ButtonID = "##" + Widget.ID + "_" + NodeID;
+			std::string ButtonID = "##" + ToString(Widget.ID) + "_" + ToString(Node.GetID());
 			if (ImGui::ImageButton(ButtonID.c_str(), IconToUse, IconsSize * WidgetIconScale))
 			{
 				if (Widget.OnClickCallback != nullptr)
@@ -772,7 +771,7 @@ void TreeView::RenderNode(NodeHandle Node)
 	float NodeBodyWidth = ImGui::GetContentRegionAvail().x - SpaceNeededForWidgetAtEnd - IconSpacing;
 
 	std::string DisplayedName = GetNodeDisplayName(Node);
-	std::string DisplayedText = BackendInterface::TruncateText(DisplayedName, NodeBodyWidth) + "##" + Node.GetID();
+	std::string DisplayedText = BackendInterface::TruncateText(DisplayedName, NodeBodyWidth) + "##" + ToString(Node.GetID());
 
 	if (bAlternatingNodeBackground)
 	{
@@ -815,7 +814,7 @@ void TreeView::RenderNode(NodeHandle Node)
 			if (ObjectToRename != nullptr)
 				ObjectToRename->SetName(RenameBuffer);*/
 
-			NodeIDBeingRenamed = "";
+			NodeIDBeingRenamed = FEUUID();
 		}
 
 		ImGui::PopStyleVar(2);
@@ -830,7 +829,7 @@ void TreeView::RenderNode(NodeHandle Node)
 		AfterNodeRenderCallbacks[i](Node);
 
 	CheckInputs(Node);
-	std::string NodeID = Node.GetID();
+	FEUUID NodeID = Node.GetID();
 	RenderNodeWidgets(Node);
 
 	// Ensure the node is still alive after the callbacks, as it might have been deleted.
@@ -878,7 +877,7 @@ void TreeView::SetFontSize(float NewFontSize)
 //		if (CurrentEntity == nullptr)
 //			return true;
 //
-//		size_t Seed = std::hash<std::string>{}(CurrentEntity->GetObjectID() + WidgetID);
+//		size_t Seed = std::hash<std::string>{}(CurrentEntity->GetID() + WidgetID);
 //		srand(static_cast<unsigned int>(Seed));
 //
 //		float RandomValue = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
@@ -891,7 +890,7 @@ void TreeView::SetFontSize(float NewFontSize)
 //	bool AlreadyExistingWidgetWithSameProperties = false;
 //	for (size_t i = 0; i < DebugNodeWidgets.size(); i++)
 //	{
-//		if (DebugNodeWidgets[i].Icon->GetObjectID() == NewDebugWidget.Icon->GetObjectID() && DebugNodeWidgets[i].bIsInteractive == NewDebugWidget.bIsInteractive)
+//		if (DebugNodeWidgets[i].Icon->GetID() == NewDebugWidget.Icon->GetID() && DebugNodeWidgets[i].bIsInteractive == NewDebugWidget.bIsInteractive)
 //			AlreadyExistingWidgetWithSameProperties = true;
 //	}
 //
@@ -922,7 +921,7 @@ void TreeView::SetFontSize(float NewFontSize)
 //				return nullptr;
 //
 //			// More elegant solution without rand().
-//			size_t Hash = std::hash<std::string>{}(CurrentEntity->GetObjectID());
+//			size_t Hash = std::hash<std::string>{}(CurrentEntity->GetID());
 //			size_t IconCount = DebugIconsIDs.size();
 //			if (IconCount == 0)
 //				return nullptr;
@@ -954,20 +953,20 @@ void TreeView::SetFontSize(float NewFontSize)
 
 void TreeView::RenderContextMenu()
 {
-	std::string RootID = RenderingRoot.GetID();
+	FEUUID RootID = RenderingRoot.GetID();
 
-	if (RootID.empty())
+	if (IsNull(RootID))
 		return;
 
 	if (bShouldOpenContextMenu)
 	{
 		HoveredNodeIDWhenContextMenuWasOpened = HoveredNodeID;
-		ImGui::OpenPopup(("##Scene Graph Context Menu " + RootID).c_str());
-	}	
+		ImGui::OpenPopup(("##Scene Graph Context Menu " + ToString(RootID)).c_str());
+	}
 
 	bShouldOpenContextMenu = false;
 
-	if (ImGui::BeginPopup(("##Scene Graph Context Menu " + RootID).c_str()))
+	if (ImGui::BeginPopup(("##Scene Graph Context Menu " + ToString(RootID)).c_str()))
 	{
 		SceneGraphUI::NodeHandle ContextNode = Backend->GetNodeByID(HoveredNodeIDWhenContextMenuWasOpened);
 		if (ContextMenuRenderer)
@@ -984,7 +983,7 @@ void TreeView::RenderContextMenu()
 	else
 	{
 		// Popup was closed (either by user dismissing or item selected).
-		HoveredNodeIDWhenContextMenuWasOpened = "";
+		HoveredNodeIDWhenContextMenuWasOpened = FEUUID();
 	}
 }
 
@@ -1011,12 +1010,12 @@ void TreeView::Render(NodeHandle RenderingRoot, bool bRenderRootItself)
 	if (!RenderingRoot.WasInitialized())
 		return;
 
-	//FEScene* CurrentScene = SCENE_MANAGER.GetSceneByNodeID(RenderingRoot->GetObjectID());
+	//FEScene* CurrentScene = SCENE_MANAGER.GetSceneByNodeID(RenderingRoot->GetID());
 	//if (CurrentScene == nullptr)
 	//	return;
 
-	//CurrentSceneID = CurrentScene->GetObjectID();
-	HoveredNodeID = "";
+	//CurrentSceneID = CurrentScene->GetID();
+	HoveredNodeID = FEUUID();
 
 	this->RenderingRoot = RenderingRoot;
 	this->bShowRoot = bRenderRootItself;
@@ -1037,7 +1036,7 @@ void TreeView::Render(NodeHandle RenderingRoot, bool bRenderRootItself)
 	}
 
 	ImGui::PushStyleColor(ImGuiCol_FrameBg, BackgroundColor);
-	if (ImGui::BeginListBox(("##Scene Graph" + RenderingRoot.GetID()).c_str(), ImVec2(ImGui::GetContentRegionAvail())))
+	if (ImGui::BeginListBox(("##Scene Graph" + ToString(RenderingRoot.GetID())).c_str(), ImVec2(ImGui::GetContentRegionAvail())))
 	{
 		// 0 - default.
 		// 1 - highlighted connector lines (e.g. for selected nodes).
@@ -1285,7 +1284,7 @@ void TreeView::SetDebugMode(bool bNewValue)
 		if (bDebugMode)
 		{
 			FEScene* NewScene = SCENE_MANAGER.CreateScene("Test scene");
-			TestSceneID = NewScene->GetObjectID();
+			TestSceneID = NewScene->GetID();
 			ClearAllCallbacks();
 			ClearNodeWidgets();
 
@@ -1316,7 +1315,7 @@ bool FESceneGraphUI::InitiateTestScene()
 	for (size_t i = 0; i < 30; i++)
 	{
 		FEEntity* Entity = SceneToWorkWith->CreateEntity("Node_" + std::to_string(i));
-		Nodes.push_back(SceneToWorkWith->SceneGraph.GetNodeByEntityID(Entity->GetObjectID()));
+		Nodes.push_back(SceneToWorkWith->SceneGraph.GetNodeByEntityID(Entity->GetID()));
 	}
 
 	// Create a hierarchy:
@@ -1332,39 +1331,39 @@ bool FESceneGraphUI::InitiateTestScene()
     //  23    24    25    26      27 28  29
 
 	// Level 1
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[1]->GetObjectID(), Nodes[0]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[2]->GetObjectID(), Nodes[0]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[3]->GetObjectID(), Nodes[0]->GetObjectID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[1]->GetID(), Nodes[0]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[2]->GetID(), Nodes[0]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[3]->GetID(), Nodes[0]->GetID());
 
 	// Level 2
 	for (int i = 1; i <= 3; i++)
 	{
 		for (int j = 0; j < 3; j++)
 		{
-			SceneToWorkWith->SceneGraph.MoveNode(Nodes[3 * i + j + 1]->GetObjectID(), Nodes[i]->GetObjectID());
+			SceneToWorkWith->SceneGraph.MoveNode(Nodes[3 * i + j + 1]->GetID(), Nodes[i]->GetID());
 		}
 	}
 
 	// Level 3
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[13]->GetObjectID(), Nodes[4]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[14]->GetObjectID(), Nodes[4]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[15]->GetObjectID(), Nodes[5]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[16]->GetObjectID(), Nodes[7]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[17]->GetObjectID(), Nodes[8]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[18]->GetObjectID(), Nodes[9]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[19]->GetObjectID(), Nodes[10]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[20]->GetObjectID(), Nodes[11]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[21]->GetObjectID(), Nodes[12]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[22]->GetObjectID(), Nodes[12]->GetObjectID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[13]->GetID(), Nodes[4]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[14]->GetID(), Nodes[4]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[15]->GetID(), Nodes[5]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[16]->GetID(), Nodes[7]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[17]->GetID(), Nodes[8]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[18]->GetID(), Nodes[9]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[19]->GetID(), Nodes[10]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[20]->GetID(), Nodes[11]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[21]->GetID(), Nodes[12]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[22]->GetID(), Nodes[12]->GetID());
 
 	// Level 4
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[23]->GetObjectID(), Nodes[13]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[24]->GetObjectID(), Nodes[15]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[25]->GetObjectID(), Nodes[16]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[26]->GetObjectID(), Nodes[18]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[27]->GetObjectID(), Nodes[20]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[28]->GetObjectID(), Nodes[21]->GetObjectID());
-	SceneToWorkWith->SceneGraph.MoveNode(Nodes[29]->GetObjectID(), Nodes[22]->GetObjectID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[23]->GetID(), Nodes[13]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[24]->GetID(), Nodes[15]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[25]->GetID(), Nodes[16]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[26]->GetID(), Nodes[18]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[27]->GetID(), Nodes[20]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[28]->GetID(), Nodes[21]->GetID());
+	SceneToWorkWith->SceneGraph.MoveNode(Nodes[29]->GetID(), Nodes[22]->GetID());
 
 	return true;
 }
@@ -1398,12 +1397,12 @@ FETexture* FESceneGraphUI::GetRandomDebugIcon()
 	return GetDebugIconByIndex(RandomIndex);
 }
 
-std::vector<std::string> FESceneGraphUI::GetDebugIconsIDs() const
+std::vector<FEUUID> FESceneGraphUI::GetDebugIconsIDs() const
 {
 	return DebugIconsIDs;
 }
 
-void FESceneGraphUI::SetDebugIconsIDs(const std::vector<std::string>& NewDebugIconsIDs)
+void FESceneGraphUI::SetDebugIconsIDs(const std::vector<FEUUID>& NewDebugIconsIDs)
 {
 	DebugIconsIDs = NewDebugIconsIDs;
 }

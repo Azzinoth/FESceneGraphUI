@@ -96,6 +96,8 @@ include_directories(
 
 # Expose our own include directory to consumers
 target_include_directories(FESceneGraphUI PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+# stduuid includes <gsl/span>, and BackendInterface.h exposes FEUUID, so consumers need this path too.
+target_include_directories(FESceneGraphUI PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/ThirdParty/stduuid)
 
 # Export for parent scope
 set(FE_SCENE_GRAPH_UI_DIR ${CMAKE_CURRENT_SOURCE_DIR} PARENT_SCOPE)
@@ -104,8 +106,8 @@ add_custom_command(TARGET FESceneGraphUI PRE_BUILD
     COMMAND ${CMAKE_COMMAND}
         -D PROJECT_VERSION_PREFIX=FE_SCENE_GRAPH_UI_
         -D PROJECT_VERSION_MAJOR=0
-        -D PROJECT_VERSION_MINOR=0
-        -D PROJECT_VERSION_PATCH=7
+        -D PROJECT_VERSION_MINOR=1
+        -D PROJECT_VERSION_PATCH=0
         -D PROJECT_VERSION_DIR=${CMAKE_CURRENT_SOURCE_DIR}/VersionInfo
         -P ${CMAKE_CURRENT_SOURCE_DIR}/VersionInfo/UpdateProjectVersion.cmake
 )
