@@ -377,7 +377,7 @@ void TreeView::DrawTreeConnectorLines(SceneGraphUI::NodeHandle Node, float Paren
 void TreeView::DrawAppropriateTreeArrow(SceneGraphUI::NodeHandle Node)
 {
 	float ArrowRegionWidth = FontSize;
-	ImVec2 ArrowCursorPos = ImGui::GetCursorScreenPos();
+	ImVec2 ArrowCursorPosition = ImGui::GetCursorScreenPos();
 
 	bool bNodeExpanded = IsNodeExpanded(Node);
 	bool bHasChildren = AreNodeChildrenVisible(Node);
@@ -388,8 +388,8 @@ void TreeView::DrawAppropriateTreeArrow(SceneGraphUI::NodeHandle Node)
 		float ArrowHalfSize = FontSize * 0.25f;
 		float Thickness = FontSize * TreeArrowsThicknessCoefficient;
 		ImU32 Color = ImGui::GetColorU32(ImGuiCol_Text);
-		float CenterX = ArrowCursorPos.x + ArrowRegionWidth * 0.5f;
-		float CenterY = ArrowCursorPos.y + NodeHeight * 0.5f;
+		float CenterX = ArrowCursorPosition.x + ArrowRegionWidth * 0.5f;
+		float CenterY = ArrowCursorPosition.y + NodeHeight * 0.5f;
 
 		if (bNodeExpanded)
 		{
