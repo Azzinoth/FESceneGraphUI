@@ -249,6 +249,7 @@ void TreeView::SetNodeSelectedInternal(SceneGraphUI::NodeHandle Node, bool bSele
 
 	bool bOldSelectionState = NodeState[Node.GetID()].bSelected;
 	NodeState[Node.GetID()].bSelected = bSelected;
+	CurrentlySelectedNodeIDs = GetSelectedNodeIDs();
 
 	for (const auto& Callback : OnNodeSelectionChangedCallbacks)
 		Callback(Node, bOldSelectionState);
@@ -335,7 +336,7 @@ void TreeView::DrawTreeConnectorLines(SceneGraphUI::NodeHandle Node, float Paren
 	ImColor ConnectorLineColorToUse = ImColor(this->ConnectorLineColor);
 	float ConnectorLineThicknessToUse = ConnectorLineThickness;
 	bool bNeedToHighlightNodeBranch = false;
-	std::vector<FEUUID> SelectedNodeIDs = GetSelectedNodeIDs();
+	const std::vector<FEUUID>& SelectedNodeIDs = CurrentlySelectedNodeIDs;
 	if (bHighlightSelectedNodeConnectorLines && !SelectedNodeIDs.empty())
 	{
 		for (size_t i = 0; i < SelectedNodeIDs.size(); i++)
@@ -757,6 +758,18 @@ void TreeView::RenderNode(NodeHandle Node)
 	if (!ShouldNodeBeVisible(Node))
 		return;
 
+	// Nodes not on the screen should just reserve space, but not rendered.
+	if (!ImGui::IsRectVisible(ImVec2(1.0f, NodeHeight)) && NodeIDBeingRenamed != Node.GetID())
+	{
+		if (bAlternatingNodeBackground)
+			bLastNodeWasEven = !bLastNodeWasEven;
+
+		IsNodeSelected(Node);
+		ImGui::Dummy(ImVec2(1.0f, NodeHeight));
+		RenderNodeChildren(Node);
+		return;
+	}
+
 	DrawAppropriateTreeArrow(Node);
 
 	ImTextureID BeforeNodeIcon = GetNodeIcon(Node);
@@ -836,6 +849,11 @@ void TreeView::RenderNode(NodeHandle Node)
 	if (!Backend->IsAlive(Node))
 		return;
 
+	RenderNodeChildren(Node);
+}
+
+void TreeView::RenderNodeChildren(NodeHandle Node)
+{
 	if (IsNodeExpanded(Node))
 	{
 		std::vector<SceneGraphUI::NodeHandle> Children = Node.GetChildren();
@@ -1020,6 +1038,7 @@ void TreeView::Render(NodeHandle RenderingRoot, bool bRenderRootItself)
 	this->RenderingRoot = RenderingRoot;
 	this->bShowRoot = bRenderRootItself;
 	bLastNodeWasEven = false;
+	CurrentlySelectedNodeIDs = GetSelectedNodeIDs();
 
 	if (DefaultFont == nullptr)
 		DefaultFont = ImGui::GetIO().Fonts->AddFontFromFileTTF("Resources/Cousine-Regular.ttf", 32.0f);

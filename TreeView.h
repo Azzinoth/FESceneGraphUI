@@ -51,6 +51,7 @@ namespace SceneGraphUI
 		SceneGraphUI::NodeHandle RenderingRoot;
 		bool bShowRoot = false;
 		void RenderNode(SceneGraphUI::NodeHandle Node);
+		void RenderNodeChildren(SceneGraphUI::NodeHandle Node);
 
 
 		// Appearance.
@@ -82,6 +83,7 @@ namespace SceneGraphUI
 		std::vector<std::function<void(SceneGraphUI::NodeHandle, bool)>> OnNodeSelectionChangedCallbacks;
 		void SetNodeSelectedInternal(SceneGraphUI::NodeHandle Node, bool bSelected);
 		void PurgeStaleNodeStates();
+		std::vector<FEUUID> CurrentlySelectedNodeIDs;
 
 
 		// Predicates and providers.
