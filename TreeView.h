@@ -84,6 +84,8 @@ namespace SceneGraphUI
 		void SetNodeSelectedInternal(SceneGraphUI::NodeHandle Node, bool bSelected);
 		void PurgeStaleNodeStates();
 		std::vector<FEUUID> CurrentlySelectedNodeIDs;
+		FEUUID NodeIDToScrollTo;
+		void ScrollToNodeAtCursorIfNotFullyVisible();
 
 
 		// Predicates and providers.
@@ -207,6 +209,7 @@ namespace SceneGraphUI
 		void SetNodeExpanded(SceneGraphUI::NodeHandle Node, bool bExpanded);
 		bool IsNodeExpandedTo(SceneGraphUI::NodeHandle Node);
 		void ExpandToNode(SceneGraphUI::NodeHandle Node);
+		void ScrollToNode(SceneGraphUI::NodeHandle Node);
 		void ExpandAllNodes();
 		void CollapseAllNodes();
 

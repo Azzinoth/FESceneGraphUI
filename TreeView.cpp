@@ -198,6 +198,26 @@ void TreeView::ExpandToNode(SceneGraphUI::NodeHandle Node)
 	}
 }
 
+void TreeView::ScrollToNode(SceneGraphUI::NodeHandle Node)
+{
+	if (!Node)
+		return;
+
+	ExpandToNode(Node);
+	NodeIDToScrollTo = Node.GetID();
+}
+
+void TreeView::ScrollToNodeAtCursorIfNotFullyVisible()
+{
+	float NodeTopY = ImGui::GetCursorScreenPos().y;
+	float NodeBottomY = NodeTopY + NodeHeight;
+	ImDrawList* DrawList = ImGui::GetWindowDrawList();
+	if (NodeTopY >= DrawList->GetClipRectMin().y && NodeBottomY <= DrawList->GetClipRectMax().y)
+		return;
+
+	ImGui::SetScrollFromPosY(NodeTopY + NodeHeight * 0.5f - ImGui::GetWindowPos().y, 0.5f);
+}
+
 bool TreeView::IsNodeExpandedTo(SceneGraphUI::NodeHandle Node)
 {
 	SceneGraphUI::NodeHandle Current = Node.GetParent();
@@ -758,6 +778,12 @@ void TreeView::RenderNode(NodeHandle Node)
 	if (!ShouldNodeBeVisible(Node))
 		return;
 
+	if (NodeIDToScrollTo == Node.GetID())
+	{
+		NodeIDToScrollTo = FEUUID();
+		ScrollToNodeAtCursorIfNotFullyVisible();
+	}
+
 	// Nodes not on the screen should just reserve space, but not rendered.
 	if (!ImGui::IsRectVisible(ImVec2(1.0f, NodeHeight)) && NodeIDBeingRenamed != Node.GetID())
 	{
@@ -1079,6 +1105,9 @@ void TreeView::Render(NodeHandle RenderingRoot, bool bRenderRootItself)
 					RenderNode(Children[i]);
 			}
 		}
+
+		// Requested node was not rendered (e.g. filtered out), so request is dropped instead of firing later.
+		NodeIDToScrollTo = FEUUID();
 
 		// Node widgets render on the same line as the Selectable and shift the cursor Y position due to vertical centering adjustments.
 		// We restore the cursor to the pre-widget Y position so the next node starts at the correct vertical offset.
